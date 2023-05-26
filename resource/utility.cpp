@@ -187,7 +187,7 @@ auto read_inter_arrival(std::string filename) -> std::deque<double> {
     auto res = std::deque<double>{};
 
     if (!file.is_open()) {
-        throw CannotReadFile();
+        throw CannotReadFile(filename);
     }
 
     double arrival_time;
@@ -209,7 +209,7 @@ auto read_processing_time(std::string filename) -> std::deque<std::deque<double>
     auto res = std::deque<std::deque<double>>{};
 
     if (!file.is_open()) {
-        throw CannotReadFile();
+        throw CannotReadFile(filename);
     }
 
     std::string line;
@@ -243,7 +243,7 @@ auto read_para(std::string filename) -> std::pair<unsigned,unsigned> {
     auto file = std::ifstream(filename);
 
     if (!file.is_open()) {
-        throw CannotReadFile();
+        throw CannotReadFile(filename);
     }
 
     unsigned threshold;

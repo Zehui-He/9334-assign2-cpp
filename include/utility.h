@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <sstream>
 
 #ifndef UTILITY_H
 #define UTILITY_H
@@ -97,9 +98,18 @@ class ServerController {
 // };
 
 class CannotReadFile : public std::exception {
-    char* what() {
-        static char msg[] = "Cannot read the data file.";
-        return msg;
+    private: 
+        std::string errorMessage;
+
+    public:
+        CannotReadFile(const std::string& filename) {
+            std::stringstream ss;
+            ss << "Cannot read the data file: " << filename << std::endl;
+            errorMessage = ss.str();
+        }
+
+    const char* what() const noexcept override {
+        return errorMessage.c_str();
     }
 };
 
