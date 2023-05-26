@@ -2,6 +2,8 @@
 #include <deque>
 #include <optional>
 #include <vector>
+#include <string>
+#include <fstream>
 
 #ifndef UTILITY_H
 #define UTILITY_H
@@ -11,13 +13,15 @@ constexpr unsigned UNSIGNED_INF = std::numeric_limits<unsigned>::max();
 
 class Job {
     public:
-        Job(double, std::deque<double>);
+        Job(std::pair<double, std::deque<double>>);
         unsigned get_c();
         bool need_further_process();
         double get_next_process_time();
         double get_dep_time();
+        double get_arr_time();
         void set_dep_time(double);
         void update_c();
+        unsigned total_job();
     private:
         std::deque<double> processing_times;
         unsigned c;
@@ -78,5 +82,30 @@ class ServerController {
     private:
         std::vector<Server> servers;
 };
+
+// class JobGenerator {
+//     public:
+
+//     private:
+//         double lambda;
+//         double alpha;
+//         double beta;
+//         double upper;
+//         double lower;
+//         double j_probs;
+
+// };
+
+class CannotReadFile : public std::exception {
+    char* what() {
+        static char msg[] = "Cannot read the data file.";
+        return msg;
+    }
+};
+
+std::deque<double> read_inter_arrival(std::string);
+std::deque<std::deque<double>> read_processing_time(std::string);
+std::deque<std::pair<double, std::deque<double>>> zip(std::deque<double>&&, std::deque<std::deque<double>>&&);
+std::pair<unsigned, unsigned> read_para(std::string);
 
 #endif

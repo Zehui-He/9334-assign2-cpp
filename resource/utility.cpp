@@ -1,10 +1,15 @@
 #include "../include/utility.h"
 #include <deque>
 #include <optional>
+#include <string>
+#include <cstring>
+#include <iostream>
+#include <sstream>
 
 // A job should be initilized with arrival time and 
 // a set of processing time. 
-Job::Job(double arrival_time, std::deque<double> processing_times) {
+Job::Job(std::pair<double, std::deque<double>> arrival_procs) {
+    auto [arrival_time, processing_times] = arrival_procs;
     this->processing_times = processing_times;
     this->c = 0;
     this->arrival_time = arrival_time;
@@ -33,6 +38,14 @@ auto Job::get_next_process_time() -> double {
 //
 auto Job::get_dep_time() -> double {
     return this->depature_time;
+}
+
+auto Job::get_arr_time() -> double {
+    return this->arrival_time;
+}
+
+auto Job::total_job() -> unsigned {
+    return this->job_num;
 }
 
 auto Job::set_dep_time(double dep_time) -> void {
@@ -140,13 +153,16 @@ auto ServerController::find_empty_server() -> unsigned {
 auto ServerController::first_departure_time_server() -> std::pair<double, unsigned> {
     auto server_idx = UNSIGNED_INF;
     auto dep_time = FLOAT_INF;
-    for (auto server = this->servers.begin(); server != this->servers.end(); server++) {
-        if (server->is_busy && server->job.value().get_dep_time() < dep_time) {
-            dep_time = server->job.value().get_dep_time();
-            server_idx = std::distance(this->servers.begin(), server);
+
+    for (auto i = 0; i < this->servers.size(); i++) {
+        if (this->servers[i].is_busy) {
+            if (this->servers[i].job.value().get_dep_time() < dep_time) {
+                dep_time = servers[i].job.value().get_dep_time();
+                server_idx = i;
+            }
         }
     }
-    return std::pair<double, unsigned>{server_idx, dep_time};
+    return std::pair<double, unsigned>{dep_time, server_idx};
 }
 
 auto ServerController::server_busy() -> bool {
@@ -166,3 +182,75 @@ auto ServerController::dep_job_from_server(unsigned server_id) -> Job {
     return this->servers[server_id].depart_job();
 }
 
+auto read_inter_arrival(std::string filename) -> std::deque<double> {
+    auto file = std::ifstream(filename);
+    auto res = std::deque<double>{};
+
+    if (!file.is_open()) {
+        throw CannotReadFile();
+    }
+
+    double arrival_time;
+    while (file >> arrival_time) {
+        res.push_back(arrival_time);
+    }
+
+    // 
+    for (auto i = 1; i < res.size(); i++) {
+        res[i] = res[i - 1] + res[i];
+    }
+
+    file.close();
+    return res;
+}
+
+auto read_processing_time(std::string filename) -> std::deque<std::deque<double>> {
+    auto file = std::ifstream(filename);
+    auto res = std::deque<std::deque<double>>{};
+
+    if (!file.is_open()) {
+        throw CannotReadFile();
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        auto process_time = std::deque<double>{};
+
+        std::stringstream item_stream(line);
+        std::string procs_time;
+        while (std::getline(item_stream, procs_time, ' ')) { // Read the processing time into the buffer 
+            if (strcmp(procs_time.c_str(), "NaN") == 0) { // Stop if the processing time equals to "NaN"
+                break;
+            }
+            process_time.push_back(std::stod(procs_time.c_str()));
+        }
+        res.push_back(process_time);
+    }
+    
+    file.close();
+    return res;
+}
+
+auto zip(std::deque<double>&& a, std::deque<std::deque<double>>&& b) -> std::deque<std::pair<double, std::deque<double>>> {
+    auto res = std::deque<std::pair<double, std::deque<double>>>{};
+    for (auto i = 0; i < a.size(); i++) {
+        res.emplace_back(a[i], b[i]);
+    }
+    return res;
+}
+
+auto read_para(std::string filename) -> std::pair<unsigned,unsigned> {
+    auto file = std::ifstream(filename);
+
+    if (!file.is_open()) {
+        throw CannotReadFile();
+    }
+
+    unsigned threshold;
+    unsigned num_server;
+    file >> threshold;
+    file >> num_server;
+
+    file.close();
+    return std::pair<unsigned, unsigned>{threshold, num_server};
+}
