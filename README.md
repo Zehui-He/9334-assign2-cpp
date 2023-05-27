@@ -1,2 +1,4 @@
 # 9334-assign2-cpp
- A C++ implementation of COMP9334 assign2
+As specified in the requirements, COMP9334 assignment 2 must be coded in either C or Python. However, when I was halfway through completing the assignment, I realized that the queue, dispatcher, and server can be represented by classes, while their behavior can be translated into methods. Unfortunately, Python is not a strongly typed language, which posed some challenges. To overcome this limitation, I came up with the idea of implementing this assignment in C++. Since this is my very first C++ project, there are many areas that require improvement. I would greatly appreciate your assistance in refining it.
+
+The second purpose of this project is to inspire those who are struggling with this assignment. This example can provide you with a general idea of the solution. Since you are allowed to code in Python, you can easily translate the code into Python. Good luck with your assignment!
