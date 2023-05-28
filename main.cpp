@@ -4,7 +4,10 @@
 #include <tuple>
 #include <vector>
 #include <sstream>
-#include <iomanip>
+
+using Next_event = bool;
+constexpr bool ARRIVAL = true;
+constexpr bool DEPARTURE = false;
 
 int main(int argc, char* argv[]) {
     auto test_idx = argv[1]; // should receive from args 
@@ -47,21 +50,21 @@ int main(int argc, char* argv[]) {
         
         // Determine the next event 
         double next_event_time;
-        std::string next_event_type;
+        Next_event next_event_type;
         if (next_arrival_time < first_departure_time) {
             next_event_time = next_arrival_time;
-            next_event_type = "arrival";
+            next_event_type = ARRIVAL;
         }
         else {
             next_event_time = first_departure_time;
-            next_event_type = "departure";
+            next_event_type = DEPARTURE;
         }
 
         // Update the master clock
         master_clock = next_event_time;
 
         // Handle the event
-        if (next_event_type == "arrival") { // If it is an arrival event
+        if (next_event_type == ARRIVAL) { // If it is an arrival event
             auto new_job = Job(job_data[0]);
             job_data.pop_front(); // The first job is consumed 
             // Push into server if there is an empty server
@@ -75,13 +78,13 @@ int main(int argc, char* argv[]) {
             auto finished_job = server_controller.dep_job_from_server(first_departure_server);
             // Record an entry
             auto entry = std::tuple<double, double, unsigned, unsigned>{finished_job.get_arr_time(), finished_job.get_dep_time(), finished_job.get_c(), finished_job.total_job()};
-            complete_entry.push_back(entry);
+            complete_entry.emplace_back(entry);
 
             if (finished_job.need_further_process()) { // Put the job into dispatcher if it need further process
                 dispatcher.recv_job(finished_job);
             }
             else { // The job depart from the system permenently
-                permenent_depature.push_back(finished_job);
+                permenent_depature.emplace_back(finished_job);
             }
 
             // If there is jobs in dispatcher
@@ -92,7 +95,7 @@ int main(int argc, char* argv[]) {
     }
 
     for (auto entry : complete_entry) {
-        std::cout << std::setprecision(4) << std::fixed << std::get<0>(entry) << " " << std::get<1>(entry) << " " << std::get<2>(entry) << " " << std::get<3>(entry) << " " << std::endl;
+        printMyEntry(entry);
     }
 
     return 0;

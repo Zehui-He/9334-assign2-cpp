@@ -88,7 +88,7 @@ auto Dispatcher::recv_job(Job job) -> void {
     this->high_priority_queue.jobs.push_back(job);
 }
 
-// WARNING: This may not work as it should be
+
 auto Dispatcher::give_job() -> Job {
     if (this->high_priority_queue.jobs.size() > 0) {
         auto res = this->high_priority_queue.jobs.front();
@@ -253,4 +253,8 @@ auto read_para(std::string filename) -> std::pair<unsigned,unsigned> {
 
     file.close();
     return std::pair<unsigned, unsigned>{threshold, num_server};
+}
+
+auto printMyEntry(const std::tuple<double, double, unsigned, unsigned>& entry) -> void {
+    std::cout << std::setprecision(4) << std::fixed << std::get<0>(entry) << " " << std::get<1>(entry) << " " << std::get<2>(entry) << " " << std::get<3>(entry) << " " << std::endl;
 }

@@ -5,9 +5,9 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 
-#ifndef UTILITY_H
-#define UTILITY_H
+#pragma once
 
 constexpr float FLOAT_INF = std::numeric_limits<float>::max();
 constexpr unsigned UNSIGNED_INF = std::numeric_limits<unsigned>::max();
@@ -117,5 +117,4 @@ std::deque<double> read_inter_arrival(std::string);
 std::deque<std::deque<double>> read_processing_time(std::string);
 std::deque<std::pair<double, std::deque<double>>> zip(std::deque<double>&&, std::deque<std::deque<double>>&&);
 std::pair<unsigned, unsigned> read_para(std::string);
-
-#endif
+void printMyEntry(const std::tuple<double, double, unsigned, unsigned>&);
