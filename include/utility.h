@@ -15,14 +15,14 @@ constexpr unsigned UNSIGNED_INF = std::numeric_limits<unsigned>::max();
 class Job {
     public:
         Job(std::pair<double, std::deque<double>>);
-        unsigned get_c();
-        bool need_further_process();
+        unsigned get_c() const;
+        bool need_further_process() const;
         double get_next_process_time();
-        double get_dep_time();
-        double get_arr_time();
+        double get_dep_time() const;
+        double get_arr_time() const;
         void set_dep_time(double);
         void update_c();
-        unsigned total_job();
+        unsigned total_job() const;
     private:
         std::deque<double> processing_times;
         unsigned c;
@@ -51,7 +51,7 @@ class Dispatcher {
         Dispatcher(unsigned);
         void recv_job(Job);
         Job give_job();
-        size_t number_of_jobs();
+        size_t number_of_jobs() const;
     private:
         Queue high_priority_queue;
         Queue low_priority_queue;
@@ -62,7 +62,7 @@ class Server {
     Server(unsigned);
     void recv_job(Job, double);
     Job depart_job();
-    double next_dep_time();
+    double next_dep_time() const;
 
     unsigned id;
     std::optional<Job> job;
@@ -74,9 +74,9 @@ class Server {
 class ServerController {
     public:
         ServerController(unsigned);
-        unsigned find_empty_server();
-        std::pair<double, unsigned> first_departure_time_server();
-        bool server_busy();
+        unsigned find_empty_server() const;
+        std::pair<double, unsigned> first_departure_time_server() const;
+        bool server_busy() const;
         void put_job_to_server(Job, unsigned, double);
         Job  dep_job_from_server(unsigned);
     

@@ -18,12 +18,12 @@ Job::Job(std::pair<double, std::deque<double>> arrival_procs) {
 };
 
 // Get the number of completion of the job. 
-auto Job::get_c() -> unsigned {
+auto Job::get_c() const -> unsigned {
     return this->c;
 }
 
 // Return true if the job requires further process. 
-auto Job::need_further_process() -> bool {
+auto Job::need_further_process() const -> bool {
     return this->processing_times.size() > 0;
 }
 
@@ -36,15 +36,15 @@ auto Job::get_next_process_time() -> double {
 }
 
 //
-auto Job::get_dep_time() -> double {
+auto Job::get_dep_time() const -> double {
     return this->depature_time;
 }
 
-auto Job::get_arr_time() -> double {
+auto Job::get_arr_time() const -> double {
     return this->arrival_time;
 }
 
-auto Job::total_job() -> unsigned {
+auto Job::total_job() const -> unsigned {
     return this->job_num;
 }
 
@@ -101,7 +101,7 @@ auto Dispatcher::give_job() -> Job {
 }
 
 // Give the total number of jobs that is in the dispacther. 
-auto Dispatcher::number_of_jobs() -> size_t {
+auto Dispatcher::number_of_jobs() const -> size_t {
     return this->high_priority_queue.jobs.size() + this->low_priority_queue.jobs.size();
 }
 
@@ -128,7 +128,7 @@ auto Server::depart_job() -> Job {
     return completed_job;
 }
 
-auto Server::next_dep_time() -> double {
+auto Server::next_dep_time() const -> double {
     if (!this->is_busy) {
         return FLOAT_INF;
     }
@@ -141,7 +141,7 @@ ServerController::ServerController(unsigned num_server) {
     }
 }
 
-auto ServerController::find_empty_server() -> unsigned {
+auto ServerController::find_empty_server() const -> unsigned {
     for (auto server = this->servers.begin(); server != this->servers.end(); server++) {
         if (!server->is_busy) {
             return server->id;
@@ -150,7 +150,7 @@ auto ServerController::find_empty_server() -> unsigned {
     return UNSIGNED_INF;
 }
 
-auto ServerController::first_departure_time_server() -> std::pair<double, unsigned> {
+auto ServerController::first_departure_time_server() const -> std::pair<double, unsigned> {
     auto server_idx = UNSIGNED_INF;
     auto dep_time = FLOAT_INF;
 
@@ -165,7 +165,7 @@ auto ServerController::first_departure_time_server() -> std::pair<double, unsign
     return std::pair<double, unsigned>{dep_time, server_idx};
 }
 
-auto ServerController::server_busy() -> bool {
+auto ServerController::server_busy() const -> bool {
     for (auto server = this->servers.begin(); server != this->servers.end(); server++) {
         if (server->is_busy) {
             return true;
