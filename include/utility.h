@@ -1,11 +1,11 @@
 #include <limits>
 #include <deque>
-#include <optional>
 #include <vector>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <memory>
 
 #pragma once
 
@@ -41,7 +41,7 @@ class Queue {
     Queue();
     Queue(Priority);
     Priority priority;
-    std::deque<Job> jobs;
+    std::deque<std::unique_ptr<Job>> jobs;
     
     friend class Dispatcher;
 };
@@ -49,8 +49,8 @@ class Queue {
 class Dispatcher {
     public:
         Dispatcher(unsigned);
-        void recv_job(Job);
-        Job give_job();
+        void recv_job(std::unique_ptr<Job>);
+        std::unique_ptr<Job> give_job();
         size_t number_of_jobs() const;
     private:
         Queue high_priority_queue;
@@ -60,12 +60,12 @@ class Dispatcher {
 
 class Server {
     Server(unsigned);
-    void recv_job(Job, double);
-    Job depart_job();
+    void recv_job(std::unique_ptr<Job>, double);
+    std::unique_ptr<Job> depart_job();
     double next_dep_time() const;
 
     unsigned id;
-    std::optional<Job> job;
+    std::unique_ptr<Job> job;
     bool is_busy;
     
     friend class ServerController;
@@ -77,8 +77,8 @@ class ServerController {
         unsigned find_empty_server() const;
         std::pair<double, unsigned> first_departure_time_server() const;
         bool server_busy() const;
-        void put_job_to_server(Job, unsigned, double);
-        Job  dep_job_from_server(unsigned);
+        void put_job_to_server(std::unique_ptr<Job>, unsigned, double);
+        std::unique_ptr<Job>  dep_job_from_server(unsigned);
     
     private:
         std::vector<Server> servers;
@@ -110,6 +110,18 @@ class CannotReadFile : public std::exception {
 
     const char* what() const noexcept override {
         return errorMessage.c_str();
+    }
+};
+
+class NoJobInDispatcher : public std::exception {
+    const char* what() const noexcept override {
+        return "No job in the dispatcher";
+    }
+};
+
+class NoTestIndex : public std::exception {
+    const char* what() const noexcept override {
+        return "No test index is given";
     }
 };
 

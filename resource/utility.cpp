@@ -1,6 +1,5 @@
 #include "../include/utility.h"
 #include <deque>
-#include <optional>
 #include <string>
 #include <cstring>
 #include <iostream>
@@ -60,14 +59,14 @@ auto Job::update_c() -> void {
 // dispatcher can instantize a queuqe. 
 Queue::Queue(Priority priority) {
     this->priority = priority;
-    this->jobs = std::deque<Job>{};
+    this->jobs = std::deque<std::unique_ptr<Job>>{};
 }
 
 // Initilize a queue without given priority. The queue
 // is high priority by default.
 Queue::Queue() {
     this->priority = Priority::high;
-    this->jobs = std::deque<Job>{};
+    this->jobs = std::deque<std::unique_ptr<Job>>{};
 }
 
 
@@ -80,24 +79,29 @@ Dispatcher::Dispatcher(unsigned h) {
 // Put a job into the dispatcher. If the c of job is greater than 
 // h, the job is placed into the low priority queue. Otherwise, it 
 // is placed in the high priority queue. 
-auto Dispatcher::recv_job(Job job) -> void {
-    if (job.get_c() >= this->h) {
-        this->low_priority_queue.jobs.push_back(job);
+auto Dispatcher::recv_job(std::unique_ptr<Job> job) -> void {
+    if (job->get_c() >= this->h) {
+        this->low_priority_queue.jobs.push_back(std::move(job));
         return;
     }
-    this->high_priority_queue.jobs.push_back(job);
+    this->high_priority_queue.jobs.push_back(std::move(job));
 }
 
 
-auto Dispatcher::give_job() -> Job {
+auto Dispatcher::give_job() -> std::unique_ptr<Job> {
     if (this->high_priority_queue.jobs.size() > 0) {
-        auto res = this->high_priority_queue.jobs.front();
+        auto res = std::move(this->high_priority_queue.jobs.front());
         this->high_priority_queue.jobs.pop_front();
         return res;
     }
-    auto res = this->low_priority_queue.jobs.front();
-    this->low_priority_queue.jobs.pop_front();
-    return res;
+    else if (this->low_priority_queue.jobs.size() > 0) {
+        auto res = std::move(this->low_priority_queue.jobs.front());
+        this->low_priority_queue.jobs.pop_front();
+        return res;
+    }
+    else {
+        throw NoJobInDispatcher();
+    }
 }
 
 // Give the total number of jobs that is in the dispacther. 
@@ -109,21 +113,21 @@ auto Dispatcher::number_of_jobs() const -> size_t {
 Server::Server(unsigned id) {
     this->is_busy = false;
     this->id = id;
-    this->job = std::optional<Job>{};
+    this->job = nullptr;
 }
 
-auto Server::recv_job(Job job, double master_clock) -> void {
-    auto processe_time = job.get_next_process_time();
-    job.set_dep_time(master_clock + processe_time);
+auto Server::recv_job(std::unique_ptr<Job> job, double master_clock) -> void {
+    auto processe_time = job->get_next_process_time();
+    job->set_dep_time(master_clock + processe_time);
     this->is_busy = true;
-    this->job = std::optional<Job>{job};
+    this->job = std::move(job);
 }
 
 
-auto Server::depart_job() -> Job {
-    auto completed_job = this->job.value();
-    completed_job.update_c();
-    this->job = std::optional<Job>{};
+auto Server::depart_job() -> std::unique_ptr<Job> {
+    auto completed_job = std::move(this->job);
+    completed_job->update_c();
+    this->job = nullptr;
     this->is_busy = false;
     return completed_job;
 }
@@ -132,7 +136,7 @@ auto Server::next_dep_time() const -> double {
     if (!this->is_busy) {
         return FLOAT_INF;
     }
-    return this->job.value().get_dep_time();
+    return this->job->get_dep_time();
 }
 
 ServerController::ServerController(unsigned num_server) {
@@ -156,8 +160,8 @@ auto ServerController::first_departure_time_server() const -> std::pair<double, 
 
     for (auto i = 0; i < this->servers.size(); i++) {
         if (this->servers[i].is_busy) {
-            if (this->servers[i].job.value().get_dep_time() < dep_time) {
-                dep_time = servers[i].job.value().get_dep_time();
+            if (this->servers[i].job->get_dep_time() < dep_time) {
+                dep_time = servers[i].job->get_dep_time();
                 server_idx = i;
             }
         }
@@ -174,11 +178,11 @@ auto ServerController::server_busy() const -> bool {
     return false;
 }
 
-auto ServerController::put_job_to_server(Job job, unsigned server_id, double master_clock) -> void {
-    this->servers[server_id].recv_job(job, master_clock);
+auto ServerController::put_job_to_server(std::unique_ptr<Job> job, unsigned server_id, double master_clock) -> void {
+    this->servers[server_id].recv_job(std::move(job), master_clock);
 }
 
-auto ServerController::dep_job_from_server(unsigned server_id) -> Job {
+auto ServerController::dep_job_from_server(unsigned server_id) -> std::unique_ptr<Job> {
     return this->servers[server_id].depart_job();
 }
 

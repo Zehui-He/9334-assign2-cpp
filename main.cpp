@@ -4,6 +4,7 @@
 #include <tuple>
 #include <vector>
 #include <sstream>
+#include <memory>
 
 using Next_event = bool;
 constexpr bool ARRIVAL = true;
@@ -11,6 +12,10 @@ constexpr bool DEPARTURE = false;
 
 int main(int argc, char* argv[]) {
     auto test_idx = argv[1]; // should receive from args 
+
+    if (!test_idx) {
+        throw NoTestIndex();
+    }
 
     // System configuration 
     std::stringstream para_filename;
@@ -22,7 +27,7 @@ int main(int argc, char* argv[]) {
     auto master_clock = float(0);
     auto dispatcher = Dispatcher(DISPATCHER_THRESHOLD);
     auto server_controller = ServerController(NUM_SERVER);
-    auto permenent_depature = std::vector<Job>{}; // Store the permanent depatured jobs 
+    auto permenent_depature = std::vector<std::unique_ptr<Job>>{}; // Store the permanent depatured jobs 
     auto complete_entry = std::vector<std::tuple<double, double, unsigned, unsigned>>{}; // Store the records 
 
     // Create file paths 
@@ -65,26 +70,26 @@ int main(int argc, char* argv[]) {
 
         // Handle the event
         if (next_event_type == ARRIVAL) { // If it is an arrival event
-            auto new_job = Job(job_data[0]);
+            auto new_job = std::make_unique<Job>(job_data[0]);
             job_data.pop_front(); // The first job is consumed 
             // Push into server if there is an empty server
             auto empty_server_id = server_controller.find_empty_server();
             if (empty_server_id != UNSIGNED_INF) {
-                server_controller.put_job_to_server(new_job, empty_server_id, master_clock);
+                server_controller.put_job_to_server(std::move(new_job), empty_server_id, master_clock);
             } else {
-                dispatcher.recv_job(new_job); // All servers are busy, push into dispatcher
+                dispatcher.recv_job(std::move(new_job)); // All servers are busy, push into dispatcher
             }
         } else { // If it is an depatrue event
             auto finished_job = server_controller.dep_job_from_server(first_departure_server);
             // Record an entry
-            auto entry = std::tuple<double, double, unsigned, unsigned>{finished_job.get_arr_time(), finished_job.get_dep_time(), finished_job.get_c(), finished_job.total_job()};
+            auto entry = std::tuple<double, double, unsigned, unsigned>{finished_job->get_arr_time(), finished_job->get_dep_time(), finished_job->get_c(), finished_job->total_job()};
             complete_entry.emplace_back(entry);
 
-            if (finished_job.need_further_process()) { // Put the job into dispatcher if it need further process
-                dispatcher.recv_job(finished_job);
+            if (finished_job->need_further_process()) { // Put the job into dispatcher if it need further process
+                dispatcher.recv_job(std::move(finished_job));
             }
             else { // The job depart from the system permenently
-                permenent_depature.emplace_back(finished_job);
+                permenent_depature.emplace_back(std::move(finished_job));
             }
 
             // If there is jobs in dispatcher
